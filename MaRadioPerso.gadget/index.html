@@ -1,0 +1,519 @@
+<!doctype html>
+<html>
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta charset="utf-8" />
+    <style>
+      :root {
+        --wood-dark: #3e2723;
+        --wood-light: #5d4037;
+        --brass: #d4af37;
+        --brass-dark: #aa841f;
+        --dial-bg: #fdf5e6;
+        --glow: rgba(255, 140, 0, 0.4);
+      }
+
+      * { box-sizing: border-box; outline: none; }
+
+      body {
+        width: 100%;
+        height: 100vh;
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        font-family: 'Georgia', serif;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      /* Boîtier Cathédrale Années 30 */
+      .radio-case {
+        width: 240px;
+        height: 380px;
+        background: linear-gradient(to right, var(--wood-dark), var(--wood-light), var(--wood-dark));
+        border-radius: 100px 100px 15px 15px; /* Forme arrondie typique */
+        border: 6px solid #2a1b15;
+        box-shadow: 0 30px 60px rgba(0,0,0,0.8), inset 0 0 40px rgba(0,0,0,0.5);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 30px 20px 20px 20px;
+        position: relative;
+        -webkit-app-region: drag;
+      }
+
+      /* Ornementation Bois */
+      .radio-case::before {
+        content: "";
+        position: absolute;
+        top: 15px; bottom: 15px; left: 15px; right: 15px;
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 85px 85px 10px 10px;
+        pointer-events: none;
+      }
+
+      /* Grille Haut-Parleur Vintage */
+      .speaker-area {
+        width: 100%;
+        height: 110px;
+        background: 
+          repeating-linear-gradient(45deg, #4e342e 0, #4e342e 2px, transparent 2px, transparent 4px),
+          repeating-linear-gradient(-45deg, #3e2723 0, #3e2723 2px, #5d4037 2px, #5d4037 4px);
+        border: 4px solid #2a1b15;
+        border-radius: 15px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 25px;
+        box-shadow: inset 0 5px 15px rgba(0,0,0,0.8);
+      }
+
+      /* Cadran Analogique Rétro */
+      .tuning-dial {
+        width: 100%;
+        height: 75px;
+        background: var(--dial-bg);
+        border: 5px solid var(--brass-dark);
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 20px;
+        box-shadow: 
+          inset 0 0 15px var(--glow),
+          0 0 10px rgba(0,0,0,0.5);
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* Effet de lumière chaude sur le cadran */
+      .tuning-dial::after {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: radial-gradient(circle at center, transparent, rgba(139, 69, 19, 0.1));
+        pointer-events: none;
+      }
+
+      .lcd-name { 
+        font-size: 14px; 
+        font-weight: bold; 
+        color: #2a1b15; 
+        text-align: center; 
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        z-index: 2;
+      }
+      .lcd-status { 
+        font-size: 10px; 
+        margin-top: 5px; 
+        color: #8b4513; 
+        font-style: italic;
+        z-index: 2;
+      }
+
+      /* Commandes */
+      .controls {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        -webkit-app-region: no-drag;
+      }
+
+      select {
+        width: 100%;
+        background: #2a1b15;
+        color: var(--brass);
+        border: 2px solid var(--brass-dark);
+        padding: 6px;
+        font-size: 11px;
+        border-radius: 4px;
+        font-family: serif;
+      }
+
+      .btn-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* Gros bouton Play en laiton */
+      .play-btn {
+        width: 50px;
+        height: 50px;
+        background: radial-gradient(circle at 30% 30%, var(--brass), var(--brass-dark));
+        border: 3px solid #2a1b15;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.6);
+      }
+      .play-btn:active { transform: scale(0.95); box-shadow: 0 2px 4px rgba(0,0,0,0.6); }
+      .play-btn svg { width: 22px; fill: #2a1b15; }
+
+      .mini-btn {
+        width: 32px;
+        height: 32px;
+        background: #3e2723;
+        border: 2px solid var(--brass-dark);
+        border-radius: 50%;
+        color: var(--brass);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        font-size: 16px;
+      }
+
+      .scan-btn {
+        padding: 6px 12px;
+        background: #3e2723;
+        border: 2px solid var(--brass-dark);
+        color: var(--brass);
+        font-size: 10px;
+        font-weight: bold;
+        cursor: pointer;
+        border-radius: 4px;
+        font-family: serif;
+      }
+
+      /* Volume Rétro */
+      input[type="range"] {
+        accent-color: var(--brass);
+        height: 4px;
+      }
+
+      /* Panneau de réglages */
+      #setup-overlay {
+        position: absolute;
+        top: 20px; bottom: 20px; left: 20px; right: 20px;
+        background: #fdf5e6; /* Papier vieilli */
+        border-radius: 15px;
+        border: 4px solid var(--brass-dark);
+        padding: 40px 15px 15px 15px;
+        display: none;
+        flex-direction: column;
+        z-index: 100;
+        overflow-y: auto;
+        box-shadow: 0 0 50px rgba(0,0,0,0.9);
+      }
+
+      .setup-section {
+        width: 100%;
+        margin-bottom: 25px;
+        padding: 10px;
+        background: rgba(0,0,0,0.05);
+        border-radius: 8px;
+        text-align: justify; /* Mandat Gemini */
+        hyphens: auto; /* Mandat Gemini */
+      }
+      .setup-section h4 {
+        margin: 0 0 15px 0;
+        color: #3e2723;
+        font-size: 12px;
+        text-transform: uppercase;
+        border-bottom: 2px solid var(--brass-dark);
+        padding-bottom: 5px;
+        text-align: center;
+      }
+
+      .station-row {
+        display: flex;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+      }
+      .station-row label {
+        margin-left: 10px;
+        font-size: 11px;
+        color: #3e2723;
+        cursor: pointer;
+        flex-grow: 1;
+      }
+
+      .action-btn {
+        width: 100%;
+        padding: 10px;
+        background: var(--wood-dark);
+        border: 1px solid var(--brass);
+        color: var(--brass);
+        border-radius: 4px;
+        font-weight: bold;
+        cursor: pointer;
+        font-size: 10px;
+        margin-top: 5px;
+      }
+      
+      .save-btn {
+        width: 100%;
+        padding: 14px;
+        background: var(--brass);
+        color: #3e2723;
+        border: none;
+        border-radius: 8px;
+        font-weight: 900;
+        cursor: pointer;
+        position: sticky;
+        bottom: 0;
+        margin-top: 10px;
+      }
+
+      .close-x { position: absolute; top: 15px; right: 20px; color: #3e2723; cursor: pointer; font-size: 24px; -webkit-app-region: no-drag; }
+      
+      /* Visualizer Rétro */
+      .visualizer { display: flex; gap: 4px; align-items: flex-end; height: 40px; }
+      .bar { width: 5px; background: var(--brass); height: 4px; border-radius: 1px; opacity: 0.8; }
+      .playing .bar { animation: tune 0.8s infinite alternate ease-in-out; }
+      @keyframes tune { from { height: 4px; opacity: 0.5; } to { height: 35px; opacity: 1; } }
+    </style>
+  </head>
+  <body>
+    <div class="radio-case">
+      <span class="close-x" onclick="closeApp()">×</span>
+
+      <div class="speaker-area">
+        <div id="visualizer" class="visualizer">
+          <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        </div>
+      </div>
+
+      <div class="tuning-dial">
+        <div id="lcdName" class="lcd-name">RADIO STAR</div>
+        <div id="lcdStatus" class="lcd-status">READY</div>
+      </div>
+
+      <div class="controls">
+        <select id="favList" onchange="changeStation()">
+          <option value="">-- STATIONS --</option>
+        </select>
+
+        <div class="btn-row">
+          <div class="mini-btn" onclick="toggleView()" title="Réglages">⚙</div>
+          <div class="play-btn" onclick="togglePlay()">
+            <svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <svg id="pauseIcon" viewBox="0 0 24 24" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+          </div>
+          <button class="scan-btn" onclick="openScan()">SCAN</button>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:10px">
+          <span style="font-size:9px; color:var(--brass); font-weight:bold">VOLUME</span>
+          <input type="range" id="volRange" style="flex-grow:1" min="0" max="1" step="0.01" oninput="updateVolume(this.value)">
+        </div>
+      </div>
+
+      <div id="setup-overlay">
+        <div class="setup-header">Configuration</div>
+        
+        <div class="setup-section">
+          <h4>Stations Suggérées</h4>
+          <div id="fullList"></div>
+        </div>
+
+        <div class="setup-section">
+          <h4>Ajout Manuel</h4>
+          <input type="text" id="manualName" placeholder="Nom de la station">
+          <input type="url" id="manualUrl" placeholder="URL du flux (mp3/aac)">
+          <button class="action-btn" onclick="addManualRadio()">AJOUTER AU CATALOGUE</button>
+        </div>
+
+        <div class="setup-section">
+          <h4>Recherche Mondiale</h4>
+          <input type="text" id="searchText" placeholder="Ex: Rock, France, Jazz...">
+          <button class="action-btn" onclick="searchRadios()" style="background:#444; color:white">LANCER LE SCAN</button>
+          <div id="searchResults" style="margin-top:10px"></div>
+        </div>
+
+        <button class="save-btn" onclick="saveSettings()">VALIDER TOUT</button>
+      </div>
+
+      <audio id="audioEngine" style="display:none"></audio>
+    </div>
+
+    <script>
+      var catalog = [
+        { name: "France Info", url: "https://icecast.radiofrance.fr/franceinfo-midfi.mp3" },
+        { name: "France Inter", url: "https://icecast.radiofrance.fr/franceinter-midfi.mp3" },
+        { name: "Jazz Radio", url: "http://jazzradio.ice.infomaniak.ch/jazzradio-high.mp3" },
+        { name: "RTL", url: "https://icecast.rtl.fr/rtl-1-44-128?listen=webkey" },
+        { name: "Nostalgie", url: "https://ais-live.doublepimp.com/nostalgie.mp3" },
+        { name: "Skyrock", url: "http://www.skyrock.fm/stream.php/radioskyrock-128.mp3" },
+        { name: "Europe 1", url: "https://ais-live.doublepimp.com/europe1.mp3" }
+      ];
+
+      var myFavs = [];
+      var player = document.getElementById("audioEngine");
+
+      // Fonction centrale pour sauvegarder tous les réglages sur le disque
+      function persistSettings() {
+        if (window.pywebview && window.pywebview.api) {
+          var data = {
+            favorites: myFavs,
+            volume: document.getElementById("volRange").value,
+            lastStation: localStorage.getItem("lastStation")
+          };
+          window.pywebview.api.save_settings(data);
+        }
+      }
+
+      function init() {
+        // On attend que l'API Python soit prête
+        if (window.pywebview) {
+          loadData();
+        } else {
+          window.addEventListener('pywebviewready', loadData);
+        }
+      }
+
+      async function loadData() {
+        try {
+          // Chargement depuis le fichier JSON via Python
+          var saved = await window.pywebview.api.load_settings();
+          
+          if (saved) {
+            if (saved.favorites) myFavs = saved.favorites;
+            if (saved.volume !== undefined) {
+              document.getElementById("volRange").value = saved.volume;
+              player.volume = Math.pow(saved.volume, 2);
+            }
+            if (saved.lastStation) {
+              localStorage.setItem("lastStation", saved.lastStation);
+            }
+          } else {
+            // Fallback sur le localStorage si le fichier n'existe pas encore
+            var local = localStorage.getItem("myRadios");
+            if (local) myFavs = JSON.parse(local);
+          }
+        } catch (e) { 
+          console.error("Erreur chargement:", e);
+        }
+
+        renderCatalog();
+        refreshDropdown();
+
+        var lastStation = localStorage.getItem("lastStation");
+        if (lastStation && myFavs.some(s => s.url === lastStation)) {
+          document.getElementById("favList").value = lastStation;
+          changeStation(false);
+        }
+
+        player.onplaying = () => { document.getElementById("visualizer").classList.add("playing"); updateIcons(true); document.getElementById("lcdStatus").innerText = "• PLAYING •"; };
+        player.onpause = () => { document.getElementById("visualizer").classList.remove("playing"); updateIcons(false); document.getElementById("lcdStatus").innerText = "IDLE"; };
+        player.onloadstart = () => { document.getElementById("lcdStatus").innerText = "TUNING..."; };
+        player.onerror = () => { document.getElementById("lcdStatus").innerText = "SCAN ERROR"; };
+      }
+
+      function togglePlay() { if (!player.src) return; if (player.paused) player.play(); else player.pause(); }
+      function updateIcons(isPlaying) {
+        document.getElementById("playIcon").style.display = isPlaying ? "none" : "block";
+        document.getElementById("pauseIcon").style.display = isPlaying ? "block" : "none";
+      }
+      
+      function updateVolume(val) { 
+        player.volume = Math.pow(val, 2); 
+        localStorage.setItem("myVolume", val);
+        persistSettings(); // Sauvegarde immédiate du volume
+      }
+
+      function renderCatalog() {
+        var container = document.getElementById("fullList");
+        var html = "";
+        catalog.forEach((s, i) => {
+          var isChecked = myFavs.some(f => f.url === s.url) ? "checked" : "";
+          html += `<div class="station-row">
+            <input type="checkbox" id="r${i}" ${isChecked} data-idx="${i}">
+            <label for="r${i}">${s.name}</label>
+          </div>`;
+        });
+        container.innerHTML = html;
+      }
+
+      function openScan() { toggleView(); document.getElementById("searchText").focus(); }
+
+      function addManualRadio() {
+        var n = document.getElementById("manualName").value, u = document.getElementById("manualUrl").value;
+        if (n && u) { 
+          myFavs.push({name: n, url: u}); 
+          renderCatalog(); 
+          refreshDropdown(); 
+          persistSettings();
+          alert("Ajoutée!"); 
+        }
+      }
+
+      async function searchRadios() {
+        var q = document.getElementById("searchText").value; if (!q) return;
+        var resDiv = document.getElementById("searchResults");
+        resDiv.innerHTML = '<div style="color:var(--radio-gold); text-align:center">Scanning...</div>';
+        try {
+          var r = await fetch("https://de1.api.radio-browser.info/json/stations/search?name=" + encodeURIComponent(q) + "&limit=20&hidebroken=true&order=clickcount&reverse=true");
+          var data = await r.json();
+          resDiv.innerHTML = data.map(s => `
+            <div style="background:#222; color:white; padding:8px; margin-bottom:5px; border-radius:6px; cursor:pointer; font-size:10px; border:1px solid #333" onclick="addSearchedRadio('${s.name.replace(/'/g," ")}', '${s.url_resolved}')">
+              <span style="color:var(--radio-gold); font-weight:bold">+</span> ${s.name.substring(0,25)}
+            </div>
+          `).join("");
+          if(data.length === 0) resDiv.innerHTML = '<div style="color:white; text-align:center">No results.</div>';
+        } catch (e) { resDiv.innerHTML = '<div style="color:white; text-align:center">Scan error.</div>'; }
+      }
+
+      function addSearchedRadio(n, u) { 
+        myFavs.push({name: n, url: u}); 
+        renderCatalog(); 
+        refreshDropdown(); 
+        persistSettings();
+        alert("Saved!"); 
+      }
+
+      function toggleView() {
+        var s = document.getElementById("setup-overlay");
+        s.style.display = (s.style.display === "flex") ? "none" : "flex";
+      }
+
+      function saveSettings() {
+        var catUrls = catalog.map(s => s.url);
+        var custom = myFavs.filter(f => !catUrls.includes(f.url));
+        var fromCat = Array.from(document.querySelectorAll("#fullList input:checked")).map(cb => catalog[cb.dataset.idx]);
+        myFavs = custom.concat(fromCat);
+        
+        localStorage.setItem("myRadios", JSON.stringify(myFavs));
+        persistSettings(); // Sauvegarde sur disque
+        
+        refreshDropdown();
+        toggleView();
+      }
+
+      function refreshDropdown() {
+        var d = document.getElementById("favList"), val = d.value;
+        d.innerHTML = '<option value="">-- MES STATIONS --</option>' + myFavs.map(s => `<option value="${s.url}">${s.name}</option>`).join("");
+        d.value = val;
+      }
+
+      function changeStation(shouldPlay = true) {
+        var u = document.getElementById("favList").value;
+        var sel = document.getElementById("favList");
+        var name = sel.options[sel.selectedIndex].text;
+        if (u) { 
+          player.src = u; 
+          if(shouldPlay) player.play(); 
+          localStorage.setItem("lastStation", u);
+          persistSettings(); // Sauvegarde de la dernière station
+          document.getElementById("lcdName").innerText = name.toUpperCase();
+        }
+      }
+
+      function closeApp() {
+        if (window.pywebview && window.pywebview.api) window.pywebview.api.close_app();
+        else window.close();
+      }
+
+      window.onload = init;
+    </script>
+  </body>
+</html>

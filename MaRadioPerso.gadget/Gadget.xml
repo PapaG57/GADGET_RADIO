@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<gadget xmlns="http://microsoft.com/sidebar/gadget">
+  <name>Ma Radio Star</name>
+  <description>Gadget de lecture radio personnalisée</description>
+  <version>1.0.0.0</version>
+  <author>Ma Radio</author>
+  <hosts>
+    <host name="sidebar">
+      <base type="HTML" src="index.html"/>
+      <permissions>Full</permissions>
+      <display name="Ma Radio Star"/>
+    </host>
+  </hosts>
+</gadget>
