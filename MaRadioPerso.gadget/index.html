@@ -266,11 +266,37 @@
 
       .close-x { position: absolute; top: 15px; right: 20px; color: #3e2723; cursor: pointer; font-size: 24px; -webkit-app-region: no-drag; }
       
-      /* Visualizer Rétro */
-      .visualizer { display: flex; gap: 4px; align-items: flex-end; height: 40px; }
-      .bar { width: 5px; background: var(--brass); height: 4px; border-radius: 1px; opacity: 0.8; }
-      .playing .bar { animation: tune 0.8s infinite alternate ease-in-out; }
-      @keyframes tune { from { height: 4px; opacity: 0.5; } to { height: 35px; opacity: 1; } }
+      /* Visualizer Moderne */
+      .speaker-area {
+        width: 100%;
+        height: 110px;
+        background: #1a110e; /* Fond plus sombre pour le canvas */
+        border: 4px solid #2a1b15;
+        border-radius: 15px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 25px;
+        box-shadow: inset 0 5px 15px rgba(0,0,0,0.8);
+        position: relative;
+        overflow: hidden;
+      }
+      
+      /* On garde la grille en superposition pour le look vintage */
+      .speaker-area::after {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: 
+          repeating-linear-gradient(45deg, rgba(78,52,46,0.3) 0, rgba(78,52,46,0.3) 2px, transparent 2px, transparent 4px),
+          repeating-linear-gradient(-45deg, rgba(62,39,35,0.3) 0, rgba(62,39,35,0.3) 2px, transparent 2px, transparent 4px);
+        pointer-events: none;
+      }
+
+      #visualizerCanvas {
+        width: 100%;
+        height: 80%;
+      }
     </style>
   </head>
   <body>
@@ -278,9 +304,7 @@
       <span class="close-x" onclick="closeApp()">×</span>
 
       <div class="speaker-area">
-        <div id="visualizer" class="visualizer">
-          <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
-        </div>
+        <canvas id="visualizerCanvas"></canvas>
       </div>
 
       <div class="tuning-dial">
@@ -333,7 +357,7 @@
         <button class="save-btn" onclick="saveSettings()">VALIDER TOUT</button>
       </div>
 
-      <audio id="audioEngine" style="display:none"></audio>
+      <audio id="audioEngine" style="display:none" crossorigin="anonymous"></audio>
     </div>
 
     <script>
@@ -349,6 +373,52 @@
 
       var myFavs = [];
       var player = document.getElementById("audioEngine");
+      var audioCtx, analyser, source, canvas, ctx, animationId;
+
+      // Initialisation du Visualiseur Audio
+      function setupVisualizer() {
+        if (audioCtx) return; // Déjà initialisé
+
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioCtx.createAnalyser();
+        source = audioCtx.createMediaElementSource(player);
+        source.connect(analyser);
+        analyser.connect(audioCtx.destination);
+
+        analyser.fftSize = 64; // Nombre de barres (plus petit = plus réactif)
+        var bufferLength = analyser.frequencyBinCount;
+        var dataArray = new Uint8Array(bufferLength);
+
+        canvas = document.getElementById("visualizerCanvas");
+        ctx = canvas.getContext("2d");
+
+        function draw() {
+          animationId = requestAnimationFrame(draw);
+          analyser.getByteFrequencyData(dataArray);
+
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          
+          var barWidth = (canvas.width / bufferLength) * 2.5;
+          var barHeight;
+          var x = 0;
+
+          for (var i = 0; i < bufferLength; i++) {
+            barHeight = dataArray[i] / 2;
+
+            // Dégradé de couleur moderne : Laiton -> Orange -> Rouge
+            var gradient = ctx.createLinearGradient(0, canvas.height, 0, 0);
+            gradient.addColorStop(0, "#d4af37"); // Laiton
+            gradient.addColorStop(0.5, "#ff8c00"); // Orange
+            gradient.addColorStop(1, "#ff4500"); // Rouge néon
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(x, canvas.height - barHeight, barWidth - 2, barHeight);
+
+            x += barWidth + 1;
+          }
+        }
+        draw();
+      }
 
       // Fonction centrale pour sauvegarder tous les réglages sur le disque
       function persistSettings() {
@@ -376,8 +446,8 @@
           // Chargement depuis le fichier JSON via Python
           var saved = await window.pywebview.api.load_settings();
           
-          if (saved) {
-            if (saved.favorites) myFavs = saved.favorites;
+          if (saved && saved.favorites && saved.favorites.length > 0) {
+            myFavs = saved.favorites;
             if (saved.volume !== undefined) {
               document.getElementById("volRange").value = saved.volume;
               player.volume = Math.pow(saved.volume, 2);
@@ -386,12 +456,13 @@
               localStorage.setItem("lastStation", saved.lastStation);
             }
           } else {
-            // Fallback sur le localStorage si le fichier n'existe pas encore
-            var local = localStorage.getItem("myRadios");
-            if (local) myFavs = JSON.parse(local);
+            // Fallback : On prend le catalogue par défaut si rien n'est sauvegardé
+            myFavs = JSON.parse(JSON.stringify(catalog));
+            persistSettings(); // On crée le fichier initial immédiatement
           }
         } catch (e) { 
           console.error("Erreur chargement:", e);
+          myFavs = JSON.parse(JSON.stringify(catalog));
         }
 
         renderCatalog();
@@ -403,13 +474,25 @@
           changeStation(false);
         }
 
-        player.onplaying = () => { document.getElementById("visualizer").classList.add("playing"); updateIcons(true); document.getElementById("lcdStatus").innerText = "• PLAYING •"; };
-        player.onpause = () => { document.getElementById("visualizer").classList.remove("playing"); updateIcons(false); document.getElementById("lcdStatus").innerText = "IDLE"; };
+        player.onplaying = () => { 
+          setupVisualizer(); 
+          if (audioCtx.state === 'suspended') audioCtx.resume();
+          updateIcons(true); 
+          document.getElementById("lcdStatus").innerText = "• PLAYING •"; 
+        };
+        player.onpause = () => { updateIcons(false); document.getElementById("lcdStatus").innerText = "IDLE"; };
         player.onloadstart = () => { document.getElementById("lcdStatus").innerText = "TUNING..."; };
         player.onerror = () => { document.getElementById("lcdStatus").innerText = "SCAN ERROR"; };
       }
 
-      function togglePlay() { if (!player.src) return; if (player.paused) player.play(); else player.pause(); }
+      function togglePlay() { 
+        if (!player.src) return; 
+        if (player.paused) {
+          player.play();
+        } else {
+          player.pause();
+        }
+      }
       function updateIcons(isPlaying) {
         document.getElementById("playIcon").style.display = isPlaying ? "none" : "block";
         document.getElementById("pauseIcon").style.display = isPlaying ? "block" : "none";

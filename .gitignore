@@ -2,7 +2,6 @@
 /build/
 /dist/
 /MaRadioStar.gadget/
-/settings.json
 *.txt
 *.png
 *.ico

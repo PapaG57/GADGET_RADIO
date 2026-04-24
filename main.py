@@ -38,7 +38,6 @@ class Api:
     def save_settings(self, settings):
         """ Sauvegarde les réglages dans settings.json """
         try:
-            import json
             with open(self.settings_path, 'w', encoding='utf-8') as f:
                 json.dump(settings, f, ensure_ascii=False, indent=4)
             return True
@@ -49,10 +48,10 @@ class Api:
     def load_settings(self):
         """ Charge les réglages depuis settings.json """
         try:
-            import json
             if os.path.exists(self.settings_path):
                 with open(self.settings_path, 'r', encoding='utf-8') as f:
-                    return json.load(f)
+                    data = json.load(f)
+                    return data
         except Exception as e:
             print(f"Erreur lors du chargement : {e}")
         return None

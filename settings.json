@@ -1,0 +1,13 @@
+{
+    "favorites": [
+        { "name": "France Info", "url": "https://icecast.radiofrance.fr/franceinfo-midfi.mp3" },
+        { "name": "France Inter", "url": "https://icecast.radiofrance.fr/franceinter-midfi.mp3" },
+        { "name": "Jazz Radio", "url": "http://jazzradio.ice.infomaniak.ch/jazzradio-high.mp3" },
+        { "name": "RTL", "url": "https://icecast.rtl.fr/rtl-1-44-128?listen=webkey" },
+        { "name": "Nostalgie", "url": "https://ais-live.doublepimp.com/nostalgie.mp3" },
+        { "name": "Skyrock", "url": "http://www.skyrock.fm/stream.php/radioskyrock-128.mp3" },
+        { "name": "Europe 1", "url": "https://ais-live.doublepimp.com/europe1.mp3" }
+    ],
+    "volume": "0.5",
+    "lastStation": "https://icecast.radiofrance.fr/franceinfo-midfi.mp3"
+}
