@@ -1,4 +1,9 @@
-from pyvda import AppView
+try:
+    from pyvda import AppView
+    HAS_PYVDA = True
+except ImportError:
+    HAS_PYVDA = False
+
 import webview
 import os
 import sys
@@ -12,11 +17,17 @@ def get_resource_path(relative_path):
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
-# Chemin vers ton index.html (on cherche dans le dossier du projet)
+# Chemin vers ton index.html
 html_path = get_resource_path(os.path.join('MaRadioPerso.gadget', 'index.html'))
+# On ajoute un paramètre unique pour éviter le cache
+html_path_with_cache_breaker = f"file:///{html_path.replace(os.sep, '/')}?v=1.1"
 
 def setup_gadget(window):
     """ Configuration avancée au démarrage de la fenêtre """
+    if not HAS_PYVDA:
+        print("Note: pyvda non installé. L'épinglage sur tous les bureaux est désactivé.")
+        return
+
     try:
         # Récupère l'identifiant (HWND) de la fenêtre Windows
         hwnd = int(window.native.Handle)
@@ -61,15 +72,20 @@ class Api:
             self.window.destroy()
 
 def start_app():
-    # Définir un dossier de stockage persistant dans APPDATA pour conserver les réglages
-    storage_path = os.path.join(os.environ.get('APPDATA', os.path.expanduser('~')), 'RadioStarGadget')
-    if not os.path.exists(storage_path):
-        os.makedirs(storage_path)
+    # Définir un dossier de stockage pour le cache WebView2
+    # On le place dans APPDATA pour éviter les conflits et faciliter le nettoyage
+    user_data_dir = os.path.join(os.environ.get('APPDATA', os.path.expanduser('~')), 'RadioStarGadget_Cache')
+    
+    # Suppression du cache au démarrage pour forcer la mise à jour des fichiers (en mode dev)
+    if not getattr(sys, 'frozen', False):
+        import shutil
+        try:
+            if os.path.exists(user_data_dir):
+                shutil.rmtree(user_data_dir)
+        except Exception as e:
+            print(f"Note: Impossible de vider tout le cache : {e}")
 
     api = Api()
-    # frameless=True : Pas de bordures
-    # easy_drag=True : Déplaçable au clic
-    # on_top=False : Pas toujours au-dessus (plus discret)
     window = webview.create_window(
         'Radio Star', 
         html_path, 
@@ -82,8 +98,8 @@ def start_app():
         js_api=api
     )
     api.window = window
-    # On lance setup_gadget une fois que la fenêtre est créée, avec le chemin de stockage
-    webview.start(setup_gadget, window, storage_path=storage_path)
+    # On force l'utilisation de 'qt' (PyQt6) pour éviter pythonnet qui échoue sur Python 3.14
+    webview.start(setup_gadget, window, storage_path=user_data_dir, gui='qt')
 
 if __name__ == '__main__':
     start_app()
